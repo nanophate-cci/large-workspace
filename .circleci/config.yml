@@ -1,0 +1,100 @@
+version: 2.1
+
+jobs:
+  build:
+    docker:
+      - image: cimg/base:current  
+    resource_class: medium
+
+    steps:
+      - checkout
+      
+      - run: mkdir nano
+      
+      - restore_cache:
+          keys:
+            - largefile-cache-main-{{ .BuildNum }} 
+            - largefile-cache-main-
+            - largefile-cache-
+
+      - run:
+          name: Generate Large Files
+          command: |
+            dd if=/dev/urandom of=nano/largefile-0.dat bs=100M count=1800
+            dd if=/dev/urandom of=nano/largefile-1.dat bs=20M count=800
+            dd if=/dev/urandom of=nano/largefile-2.dat bs=30M count=800
+            dd if=/dev/urandom of=nano/largefile-3.dat bs=40M count=800
+
+      - save_cache:
+          key: largefile-cache-main
+          paths:
+            - nano
+
+      - run:
+          name: Verify Large Files
+          command: |
+            if [ -f nano/largefile-0.dat ]; then
+              echo "Large file restored successfully."
+              ls -lh nano/
+            else
+              echo "Large file not found."
+              exit 1
+            fi
+            
+      - restore_cache:
+          keys:
+            - small-cache-main-{{ .BuildNum }} 
+            - small-cache-main-
+            - small-cache-
+
+      - run:
+          name: Generate Small File
+          command: |
+            dd if=/dev/urandom of=nano/smallfile.dat bs=1M count=300
+
+      - save_cache:
+          key: smallfile-cache-main
+          paths:
+            - nano
+      
+      - store_artifacts:
+          path: nano/
+
+      - run:
+          name: Verify Small File
+          command: |
+            if [ -f nano/smallfile.dat ]; then
+              echo "Small file restored successfully."
+              ls -lh nano/smallfile.dat
+            else
+              echo "Small file not found."
+              exit 1
+            fi
+      
+      - persist_to_workspace:
+          root: nano
+          paths:
+            - .
+
+  share_artifacts:
+    docker:
+      - image: cimg/base:current
+    resource_class: medium
+
+    steps:
+      - attach_workspace:
+          at: /workspace
+      - run:
+          name: List Shared Artifacts
+          command: |
+            echo "Shared artifacts:"
+            ls -lh /workspace
+
+workflows:
+  version: 2
+  build_and_share:
+    jobs:
+      - build
+      - share_artifacts:
+          requires:
+            - build
