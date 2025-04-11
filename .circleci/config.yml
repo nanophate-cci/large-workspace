@@ -13,20 +13,20 @@ jobs:
       
       - restore_cache:
           keys:
-            - largefile-cache-main-{{ .BuildNum }} 
-            - largefile-cache-main-
-            - largefile-cache-
+            - v1-largefile-cache-main-{{ .BuildNum }} 
+            - v1-largefile-cache-main-
+            - v1-largefile-cache-
 
       - run:
           name: Generate Large Files
           command: |
-            dd if=/dev/urandom of=nano/largefile-0.dat bs=100M count=1800
-            dd if=/dev/urandom of=nano/largefile-1.dat bs=20M count=800
-            dd if=/dev/urandom of=nano/largefile-2.dat bs=30M count=800
-            dd if=/dev/urandom of=nano/largefile-3.dat bs=40M count=800
+            dd if=/dev/urandom of=nano/largefile-0.dat bs=1M count=1800
+            dd if=/dev/urandom of=nano/largefile-1.dat bs=2M count=800
+            dd if=/dev/urandom of=nano/largefile-2.dat bs=3M count=800
+            dd if=/dev/urandom of=nano/largefile-3.dat bs=4M count=800
 
       - save_cache:
-          key: largefile-cache-main
+          key: v1-largefile-cache-main
           paths:
             - nano
 
